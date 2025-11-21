@@ -1,8 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    /***********************
-     * Static English text (no language switching)
-     ***********************/
     const t = (key, vars) => {
         const dict = {
             "search.placeholder": "Search headlines...",
@@ -58,61 +55,17 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
-    /***********************
-     * Mock articles
-     ***********************/
     const sample = [
-        {
-            title: "AI startup raises $20M to expand multilingual models",
-            summary: "A concise summary of the company's funding and plans to expand regional language support for generative models.",
-            source: "Reuters",
-            time: "1h",
-            readTime: "2 min read",
-            sentiment: "Positive",
-            confidence: "high",
-            paywalled: false
-        },
-        {
-            title: "Local team wins regional robotics cup",
-            summary: "Students celebrated after a weekend of tough matches and a creative autonomous robot design took the crown.",
-            source: "BBC",
-            time: "3h",
-            readTime: "2 min read",
-            sentiment: "Neutral",
-            confidence: "medium",
-            paywalled: false
-        },
-        {
-            title: "Major outage affects cloud provider services",
-            summary: "Multiple regions experienced interruptions; engineers are working on restoring service and investigating root cause.",
-            source: "Bloomberg",
-            time: "2h",
-            readTime: "3 min read",
-            sentiment: "Negative",
-            confidence: "high",
-            paywalled: true
-        },
-        {
-            title: "Film festival premieres a bold new documentary",
-            summary: "The documentary explores new perspectives and received a standing ovation at the premiere.",
-            source: "The Verge",
-            time: "5h",
-            readTime: "3 min read",
-            sentiment: "Positive",
-            confidence: "medium",
-            paywalled: false
-        }
+        { title: "AI startup raises $20M to expand multilingual models", summary: "A concise summary of the company's funding and plans to expand regional language support for generative models.", source: "Reuters", time: "1h", readTime: "2 min read", sentiment: "Positive", confidence: "high", paywalled: false, category: "Tech" },
+        { title: "Local team wins regional robotics cup", summary: "Students celebrated after a weekend of tough matches and a creative autonomous robot design took the crown.", source: "BBC", time: "3h", readTime: "2 min read", sentiment: "Neutral", confidence: "medium", paywalled: false, category: "Sports" },
+        { title: "Major outage affects cloud provider services", summary: "Multiple regions experienced interruptions; engineers are working on restoring service and investigating root cause.", source: "Bloomberg", time: "2h", readTime: "3 min read", sentiment: "Negative", confidence: "high", paywalled: true, category: "Tech" },
+        { title: "Film festival premieres a bold new documentary", summary: "The documentary explores new perspectives and received a standing ovation at the premiere.", source: "The Verge", time: "5h", readTime: "3 min read", sentiment: "Positive", confidence: "medium", paywalled: false, category: "Entertainment" }
     ];
 
     const imgUrl = (seed, w = 800, h = 600) => `https://picsum.photos/seed/${seed}/${w}/${h}`;
     const logoUrl = (seed) => `https://picsum.photos/seed/logo${seed}/64/64`;
 
-
-    /***********************
-     * Create card
-     ***********************/
-    function createCard(data, idSeed = Math.random() * 1000) {
+    function createCard(data, idSeed = Math.floor(Math.random() * 1000)) {
         const container = document.createElement("article");
         container.className = "card";
 
@@ -126,10 +79,12 @@ document.addEventListener("DOMContentLoaded", () => {
         container.dataset.confidence = data.confidence;
         container.dataset.coveredBy = data.coveredBy || 1;
         container.dataset.paywalled = data.paywalled ? "true" : "false";
+        container.dataset.category = data.category || "All";
 
         const img = document.createElement("img");
         img.className = "thumb";
         img.src = data.image || imgUrl(idSeed);
+        img.alt = data.title;
         container.appendChild(img);
 
         const content = document.createElement("div");
@@ -170,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const logo = document.createElement("img");
         logo.className = "source-logo";
         logo.src = logoUrl(idSeed);
+        logo.alt = data.source;
 
         const srcWrap = document.createElement("div");
         srcWrap.innerHTML = `<div class="source-name">${data.source}</div>
@@ -182,10 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badges.className = "badges";
 
         const sentiment = document.createElement("span");
-        sentiment.className = "badge " + 
-            (data.sentiment === "Positive" ? "sent-positive" :
-             data.sentiment === "Negative" ? "sent-negative" :
-             "sent-neutral");
+        sentiment.className = "badge " + (data.sentiment === "Positive" ? "sent-positive" : data.sentiment === "Negative" ? "sent-negative" : "sent-neutral");
         sentiment.textContent = data.sentiment;
 
         const confidence = document.createElement("span");
@@ -229,6 +182,13 @@ document.addEventListener("DOMContentLoaded", () => {
             b.className = "action";
             b.dataset.actionKey = a.key;
             b.innerHTML = `<span aria-hidden>${a.icon}</span><span>${a.label}</span>`;
+            if (a.key === "save") {
+                // store example behavior (visual only) — could be extended to LocalStorage
+                b.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    alert("Saved (demo). Implement persistence to keep items.");
+                });
+            }
             actions.appendChild(b);
         });
 
@@ -243,10 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return container;
     }
 
-
-    /***********************
-     * Modal
-     ***********************/
     const modalOverlay = document.getElementById("modalOverlay");
     const modalClose = document.getElementById("modalClose");
     const modalThumb = document.getElementById("modalThumb");
@@ -266,10 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modalBadges.innerHTML = "";
         const sBadge = document.createElement("span");
-        sBadge.className = "badge " +
-            (ds.sentiment === "Positive" ? "sent-positive" :
-             ds.sentiment === "Negative" ? "sent-negative" :
-             "sent-neutral");
+        sBadge.className = "badge " + (ds.sentiment === "Positive" ? "sent-positive" : ds.sentiment === "Negative" ? "sent-negative" : "sent-neutral");
         sBadge.textContent = ds.sentiment;
 
         const cBadge = document.createElement("span");
@@ -307,11 +260,40 @@ document.addEventListener("DOMContentLoaded", () => {
     modalClose.addEventListener("click", closeModal);
     modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) closeModal(); });
 
-
-    /***********************
-     * Infinite scroll
-     ***********************/
     const feed = document.getElementById("feed");
+    let currentCategory = "All";
+    let currentSearch = "";
+
+    function applyFilters() {
+        const cards = document.querySelectorAll(".card");
+        cards.forEach(card => {
+            const cat = card.dataset.category || "All";
+            const txt = (card.dataset.title + " " + card.dataset.summary).toLowerCase();
+            const matchesCategory = currentCategory === "All" || cat === currentCategory;
+            const matchesSearch = !currentSearch || txt.includes(currentSearch);
+            card.style.display = matchesCategory && matchesSearch ? "" : "none";
+        });
+    }
+
+    function setCategory(cat) {
+        currentCategory = cat;
+        const chips = document.querySelectorAll("#categoryStrip .chip");
+        chips.forEach(chip => {
+            chip.classList.toggle("active", chip.dataset.cat === cat);
+        });
+        applyFilters();
+    }
+
+    const categoryStrip = document.getElementById("categoryStrip");
+    if (categoryStrip) {
+        const chips = categoryStrip.querySelectorAll(".chip");
+        chips.forEach(chip => {
+            chip.addEventListener("click", () => {
+                const cat = chip.dataset.cat || "All";
+                setCategory(cat);
+            });
+        });
+    }
 
     function addBatch(n = 4) {
         for (let i = 0; i < n; i++) {
@@ -323,12 +305,16 @@ document.addEventListener("DOMContentLoaded", () => {
             copy.paywalled = Math.random() > 0.8;
             copy.sentiment = ["Positive", "Neutral", "Negative"][Math.floor(Math.random() * 3)];
             copy.confidence = ["low", "medium", "high"][Math.floor(Math.random() * 3)];
+            copy.category = d.category || "All";
+
             feed.appendChild(createCard(copy, Math.floor(Math.random() * 10000)));
         }
         applyTranslations();
+        applyFilters();
     }
 
     addBatch(6);
+    setCategory("All");
 
     const sentinel = document.getElementById("sentinel");
     const observer = new IntersectionObserver(entries => {
@@ -344,22 +330,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }, { rootMargin: "500px" });
     observer.observe(sentinel);
 
-
-    /***********************
-     * Search
-     ***********************/
     document.getElementById("search").addEventListener("input", e => {
-        const q = e.target.value.toLowerCase();
-        document.querySelectorAll(".card").forEach(card => {
-            const txt = (card.dataset.title + " " + card.dataset.summary).toLowerCase();
-            card.style.display = txt.includes(q) ? "" : "none";
-        });
+        currentSearch = e.target.value.toLowerCase();
+        applyFilters();
     });
 
-
-    /***********************
-     * Scroll-to-top
-     ***********************/
     const toTop = document.getElementById("toTop");
     window.addEventListener("scroll", () => {
         if (window.scrollY > 300) toTop.classList.add("show");
@@ -368,9 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     toTop.addEventListener("click", () => {
         const firstCard = document.querySelector(".feed .card");
-        firstCard
-            ? firstCard.scrollIntoView({ behavior: "smooth", block: "start" })
-            : window.scrollTo({ top: 0, behavior: "smooth" });
+        firstCard ? firstCard.scrollIntoView({ behavior: "smooth", block: "start" }) : window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     applyTranslations();
